@@ -6,6 +6,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include "lib/resize.hpp"
+#include "lib/catface.hpp"
 
 int callback(const char *fpath, const struct stat *sb, int typeflag);
 void printHelp();
@@ -14,6 +15,7 @@ const char* targetPath;
 int targetCols = 0;
 int targetRows = 0;
 int n_thread = 0;
+CatFace catface("haarcascade_frontalcatface.xml");
 
 int main(int argc, char const *argv[]) {
 
@@ -48,12 +50,23 @@ int callback(const char *fpath, const struct stat *sb, int typeflag) {
     sprintf(outPath, "output/%s", filename);
 
     cv::Mat image = cv::imread(fpath);
+    cv::Mat srcImage = image.clone();
     if (n_thread > 1) {
-      image = shrink(image, targetRows, targetCols, n_thread);
+      image = shrink(image, targetRows, targetCols, n_thread, true);
     } else {
-      image = shrink(image, targetRows, targetCols);
+      image = shrink(image, targetRows, targetCols, true);
     }
-    cv::imwrite(outPath, image);
+
+    std::vector<cv::Rect> faces = catface.detect(image);
+
+    if (faces.size() != 0) {
+      drawRectangles(srcImage, faces,
+        srcImage.cols / targetCols > srcImage.rows / targetRows
+        ? srcImage.cols / targetCols
+        : srcImage.rows / targetRows
+      );
+      cv::imwrite(outPath, srcImage);
+    }
 
     std::cout << " --> " << outPath << std::endl;
   }
