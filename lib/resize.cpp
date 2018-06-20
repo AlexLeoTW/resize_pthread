@@ -7,16 +7,16 @@ cv::Mat shrink(cv::Mat &image, int rows, int cols) {
   cv::Mat resultImage(rows, cols, CV_8UC3);        // imread seems to return CV_8UC3 by default anyway...
   double rowFactor = image.rows / rows;
   double colFactor = image.cols / cols;
+  ShrinkArgs shrinkArgs = {
+    .from        = Point2i(0, 0),
+    .to          = Point2i(cols, rows),
+    .rowFactor   = rowFactor,
+    .colFactor   = colFactor,
+    .image       = &image,
+    .resultImage = &resultImage
+  };
 
-  for (size_t row = 0; row < rows; row++) {
-    for (size_t col = 0; col < cols; col++) {
-      resultImage.at<cv::Vec3b>(row, col) = average(
-        image,
-        Point2i( ceil(colFactor * col), ceil(rowFactor * row) ),
-        Point2i( ceil(colFactor * (col + 1)), ceil(rowFactor * (row + 1)) )
-      );
-    }
-  }
+  shrinkPart((void*) &shrinkArgs);
 
   return resultImage;
 }
