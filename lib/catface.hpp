@@ -14,10 +14,11 @@ private:
 public:
   CatFace (std::string cascadePath);
 
-  std::vector<cv::Rect> CatFace::detect(cv::Mat image);
-  void CatFace::drawRectangles(cv::Mat image, std::vector<cv::Rect>);
+  std::vector<cv::Rect> detect(cv::Mat image);
 
   virtual ~CatFace ();
 };
+
+void drawRectangles(cv::Mat image, std::vector<cv::Rect>, double factor=1);
 
 #endif
