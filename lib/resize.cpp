@@ -1,12 +1,18 @@
 #include "resize.hpp"
 
-cv::Mat shrink(cv::Mat &image, int rows, int cols) {
+cv::Mat shrink(cv::Mat &image, int rows, int cols, bool keepAspect/*=false*/) {
   // Blow up when not shrinking image
   if (image.rows < rows || image.cols < cols) { exit(1); }
-
+  std::cout << "single thread" << '\n';
   cv::Mat resultImage(rows, cols, CV_8UC3);        // imread seems to return CV_8UC3 by default anyway...
   double rowFactor = image.rows / rows;
   double colFactor = image.cols / cols;
+  if (keepAspect) {
+    double commonFactor = rowFactor > colFactor ? rowFactor : colFactor;
+    rowFactor = commonFactor;
+    colFactor = commonFactor;
+  }
+
   ShrinkArgs shrinkArgs = {
     .from        = Point2i(0, 0),
     .to          = Point2i(cols, rows),
@@ -21,7 +27,7 @@ cv::Mat shrink(cv::Mat &image, int rows, int cols) {
   return resultImage;
 }
 
-cv::Mat shrink(cv::Mat &image, int rows, int cols, int n_thread) {
+cv::Mat shrink(cv::Mat &image, int rows, int cols, int n_thread, bool keepAspect/*=false*/) {
   // Blow up when not shrinking image
   if (image.rows < rows || image.cols < cols || image.rows < n_thread) { exit(1); }
 
@@ -34,6 +40,11 @@ cv::Mat shrink(cv::Mat &image, int rows, int cols, int n_thread) {
                 ? (int)(rows / n_thread)
                 : (int)(rows / n_thread + 1);
 
+  if (keepAspect) {
+    double commonFactor = rowFactor > colFactor ? rowFactor : colFactor;
+    rowFactor = commonFactor;
+    colFactor = commonFactor;
+  }
 
   for (size_t nth = 0, boundary = 0; boundary < rows; nth++, boundary += increment) {
     args[nth].from        = Point2i(0, boundary);
@@ -58,11 +69,17 @@ void *shrinkPart(void* _args) {
 
   for (size_t row = args->from.y; row < args->to.y; row++) {
     for (size_t col = args->from.x; col < args->to.x; col++) {
-      args->resultImage->at<cv::Vec3b>(row, col) = average(
-        *args->image,
-        Point2i( ceil(args->colFactor * col), ceil(args->rowFactor * row) ),
-        Point2i( ceil(args->colFactor * (col + 1)), ceil(args->rowFactor * (row + 1)) )
-      );
+
+      if (ceil(args->colFactor * (col + 1)) > args->image->cols ||
+          ceil(args->rowFactor * (row + 1)) > args->image->rows) {
+        args->resultImage->at<cv::Vec3b>(row, col) = (cv::Vec3b){0, 0, 0};
+      } else {
+        args->resultImage->at<cv::Vec3b>(row, col) = average(
+          *args->image,
+          Point2i( ceil(args->colFactor * col), ceil(args->rowFactor * row) ),
+          Point2i( ceil(args->colFactor * (col + 1)), ceil(args->rowFactor * (row + 1)) )
+        );
+      }
     }
   }
 }

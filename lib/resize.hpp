@@ -15,8 +15,8 @@ typedef struct _shrinkPartArgs {
   cv::Mat* resultImage;
 } ShrinkArgs;
 
-cv::Mat shrink(cv::Mat &image, int rows, int cols);
-cv::Mat shrink(cv::Mat &image, int rows, int cols, int n_thread);
+cv::Mat shrink(cv::Mat &image, int rows, int cols, bool keepAspect=false);
+cv::Mat shrink(cv::Mat &image, int rows, int cols, int n_thread, bool keepAspect=false);
 cv::Vec3b average(cv::Mat &image, Point2i fromPixel, Point2i toPixel);
 void *shrinkPart(void* _args);
 
