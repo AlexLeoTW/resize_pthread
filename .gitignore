@@ -4,3 +4,4 @@ app
 docs/
 output/
 pics/
+haarcascade_frontalcatface.xml
