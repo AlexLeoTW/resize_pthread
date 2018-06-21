@@ -50,22 +50,12 @@ int callback(const char *fpath, const struct stat *sb, int typeflag) {
     sprintf(outPath, "output/%s", filename);
 
     cv::Mat image = cv::imread(fpath);
-    cv::Mat srcImage = image.clone();
-    if (n_thread > 1) {
-      image = shrink(image, targetRows, targetCols, n_thread, true);
-    } else {
-      image = shrink(image, targetRows, targetCols, true);
-    }
 
     std::vector<cv::Rect> faces = catface.detect(image);
 
     if (faces.size() != 0) {
-      drawRectangles(srcImage, faces,
-        srcImage.cols / targetCols > srcImage.rows / targetRows
-        ? srcImage.cols / targetCols
-        : srcImage.rows / targetRows
-      );
-      cv::imwrite(outPath, srcImage);
+      drawRectangles(image, faces);
+      cv::imwrite(outPath, image);
     }
 
     std::cout << " --> " << outPath << std::endl;
